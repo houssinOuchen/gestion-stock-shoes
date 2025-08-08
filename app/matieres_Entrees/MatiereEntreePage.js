@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Factory, Plus, Save, X, Edit, Trash2, AlertCircle, TrendingUp, Calendar, DollarSign, Building2 } from "lucide-react"
 
 
-export default function MatiereSortiePage() {
+export default function MatiereSortiePage({ refreshMatiere }) {
     const [matiere_Prem, setMatiere_Prem] = useState([]);
     const [entrees, setEntrees] = useState([]);
     const [form, setForm] = useState({ matiere_id: '', quantite: '', date: '', prix_unite: '', fournisseur: '' });
@@ -64,6 +64,7 @@ export default function MatiereSortiePage() {
                 })
             });
 
+            refreshMatiere();
             if (!res.ok) {
                 const data = await res.json();
                 setErrors({ general: data.error || 'Erreur inconnue' });
@@ -97,6 +98,7 @@ export default function MatiereSortiePage() {
         try {
             await fetch(`/api/matieres_Entrees/${id}`, { method: 'DELETE' });
 
+            refreshMatiere();
             fetchMatieres_Entrees();
             fetchMatieres_Premiere();
         } catch (err) {
@@ -105,7 +107,7 @@ export default function MatiereSortiePage() {
     };
 
     return (
-        <div className="mx-auto px-6 my-4 space-y-6">
+        <div className="my-4 space-y-6">
             {/* Header */}
             <div className="flex items-center gap-3">
                 <Factory className="h-8 w-8 text-primary" />

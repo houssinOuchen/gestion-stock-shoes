@@ -4,6 +4,7 @@ import { SessionProvider } from "next-auth/react";
 import { Providers } from "./Providers";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import LayoutWrapper from "./LayoutWrapper";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -21,16 +22,11 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+
     return (
         <html lang="en">
             <body className={`${geistSans.variable} ${geistMono.variable}`}>
-                <SidebarProvider>
-                    <AppSidebar />
-                    <main>
-                        <SidebarTrigger />
-                        <Providers children={children} />
-                    </main>
-                </SidebarProvider>
+                <LayoutWrapper>{children}</LayoutWrapper>
             </body>
         </html>
     );

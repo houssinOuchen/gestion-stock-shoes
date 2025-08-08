@@ -12,21 +12,24 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Package, Plus, Save, X, Edit, Trash2, AlertCircle } from "lucide-react"
+import ProductionSection from "../productions/ProductionForm";
+import useAuth from "@/lib/useAuth";
 
 
 export default function ProductsPage() {
-    const { data: session, status } = useSession();
+    const user = useAuth();
     const [products, setProducts] = useState([]);
     const [form, setForm] = useState({ reference: '', type: '', genre: '', pointure: '', couleur: '', quantite: '' });
     const [errors, setErrors] = useState({});
     const [editProdId, setEditProdId] = useState(null)
+    const [reloadKey, setReloadKey] = useState(0);
     const router = useRouter()
 
-    useEffect(() => {
-        if (status == 'unauthenticated') {
-            router.push('/login');
-        }
-    }, [status])
+    // useEffect(() => {
+    //     if (status == 'unauthenticated') {
+    //         router.push('/login');
+    //     }
+    // }, [status])
 
     useEffect(() => {
         fetch('/api/produits')
@@ -34,6 +37,8 @@ export default function ProductsPage() {
             .then(data => setProducts(data.prods))
         console.log('prod: ', products);
     }, []);
+
+    if (!user) return null;
 
     const refreshProducts = async () => {
         const res = await fetch('/api/produits');
@@ -163,171 +168,161 @@ export default function ProductsPage() {
     }
 
     return (
-        <div className="container mx-auto p-6 space-y-8">
+        <div className="mx-auto p-6 space-y-8">
             {/* Header */}
             <div className="flex items-center gap-3">
                 <Package className="h-8 w-8 text-primary" />
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Gestion des Produits</h1>
-                    <p className="text-muted-foreground">Gérez votre inventaire de chaussures et accessoires</p>
-                </div>
+                {user.role !== "COMMERCIALE" ?
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">Gestion des Produits</h1>
+                        <p className="text-muted-foreground">Gérez votre inventaire de chaussures et accessoires</p>
+                    </div>
+                    :
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">Nos Produits</h1>
+                        <p className="text-muted-foreground">Notre inventaire de chaussures et accessoires</p>
+                    </div>
+                }
+
+
             </div>
 
             {/* Add/Edit Product Form */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        {editProdId ? <Edit className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
-                        {editProdId ? "Modifier le produit" : "Ajouter un produit"}
-                    </CardTitle>
-                    <CardDescription>
-                        {editProdId ? "Modifiez les informations du produit" : "Ajoutez un nouveau produit à votre inventaire"}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="reference">Référence</Label>
-                                <Input
-                                    id="reference"
-                                    placeholder="Ex: REF-001"
-                                    value={form.reference}
-                                    onChange={(e) => setForm({ ...form, reference: e.target.value })}
-                                    className={errors.reference ? "border-red-500" : ""}
-                                />
-                                {errors.reference && (
-                                    <p className="text-sm text-red-500 flex items-center gap-1">
+            {(user.role !== "COMMERCIALE") && (
+                <div className="my-4 gap-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                {editProdId ? <Edit className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+                                {editProdId ? "Modifier le produit" : "Ajouter un produit"}
+                            </CardTitle>
+                            <CardDescription>
+                                {editProdId ? "Modifiez les informations du produit" : "Ajoutez un nouveau produit à votre inventaire"}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="reference">Référence</Label>
+                                        <Input id="reference" placeholder="Ex: REF-001" value={form.reference}
+                                            onChange={(e) => setForm({ ...form, reference: e.target.value })}
+                                            className={errors.reference ? "border-red-500" : ""} />
+                                        {errors.reference && (
+                                            <p className="text-sm text-red-500 flex items-center gap-1">
+                                                <AlertCircle className="h-4 w-4" />
+                                                {errors.reference}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="type">Type de produit</Label>
+                                        <Select value={form.type} onValueChange={(value) => setForm({ ...form, type: value })}>
+                                            <SelectTrigger className={errors.type ? "border-red-500" : ""}>
+                                                <SelectValue placeholder="Sélectionnez un type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="CHAUSSURE">Chaussure</SelectItem>
+                                                <SelectItem value="BASKETS">Baskets</SelectItem>
+                                                <SelectItem value="ESPADRILLES">Espadrilles</SelectItem>
+                                                <SelectItem value="SANDALES">Sandales</SelectItem>
+                                                <SelectItem value="CLAQUETTES">Claquettes</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.type && (
+                                            <p className="text-sm text-red-500 flex items-center gap-1">
+                                                <AlertCircle className="h-4 w-4" />
+                                                {errors.type}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="genre">Genre</Label>
+                                        <Select value={form.genre} onValueChange={(value) => setForm({ ...form, genre: value })}>
+                                            <SelectTrigger className={errors.genre ? "border-red-500" : ""}>
+                                                <SelectValue placeholder="Sélectionnez un genre" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="HOMME">Homme</SelectItem>
+                                                <SelectItem value="FEMME">Femme</SelectItem>
+                                                <SelectItem value="GARÇON">Garçon</SelectItem>
+                                                <SelectItem value="FILLE">Fille</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.genre && (
+                                            <p className="text-sm text-red-500 flex items-center gap-1">
+                                                <AlertCircle className="h-4 w-4" />
+                                                {errors.genre}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="pointure">Pointure</Label>
+                                        <Input id="pointure" placeholder="Ex: 42" value={form.pointure}
+                                            onChange={(e) => setForm({ ...form, pointure: e.target.value })}
+                                            className={errors.pointure ? "border-red-500" : ""} />
+                                        {errors.pointure && (
+                                            <p className="text-sm text-red-500 flex items-center gap-1">
+                                                <AlertCircle className="h-4 w-4" />
+                                                {errors.pointure}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="couleur">Couleur</Label>
+                                        <Input id="couleur" placeholder="Ex: Noir, Blanc, Rouge" value={form.couleur}
+                                            onChange={(e) => setForm({ ...form, couleur: e.target.value })}
+                                            className={errors.couleur ? "border-red-500" : ""} />
+                                        {errors.couleur && (
+                                            <p className="text-sm text-red-500 flex items-center gap-1">
+                                                <AlertCircle className="h-4 w-4" />
+                                                {errors.couleur}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="quantite">Quantité</Label>
+                                        <Input id="quantite" type="number" placeholder="Ex: 10" value={form.quantite}
+                                            onChange={(e) => setForm({ ...form, quantite: e.target.value })}
+                                            className={errors.quantite ? "border-red-500" : ""} />
+                                        {errors.quantite && (
+                                            <p className="text-sm text-red-500 flex items-center gap-1">
+                                                <AlertCircle className="h-4 w-4" />
+                                                {errors.quantite}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {errors.general && (
+                                    <Alert variant="destructive">
                                         <AlertCircle className="h-4 w-4" />
-                                        {errors.reference}
-                                    </p>
+                                        <AlertDescription>{errors.general}</AlertDescription>
+                                    </Alert>
                                 )}
-                            </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="type">Type de produit</Label>
-                                <Select value={form.type} onValueChange={(value) => setForm({ ...form, type: value })}>
-                                    <SelectTrigger className={errors.type ? "border-red-500" : ""}>
-                                        <SelectValue placeholder="Sélectionnez un type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="CHAUSSURE">Chaussure</SelectItem>
-                                        <SelectItem value="BASKETS">Baskets</SelectItem>
-                                        <SelectItem value="ESPADRILLES">Espadrilles</SelectItem>
-                                        <SelectItem value="SANDALES">Sandales</SelectItem>
-                                        <SelectItem value="CLAQUETTES">Claquettes</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {errors.type && (
-                                    <p className="text-sm text-red-500 flex items-center gap-1">
-                                        <AlertCircle className="h-4 w-4" />
-                                        {errors.type}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="genre">Genre</Label>
-                                <Select value={form.genre} onValueChange={(value) => setForm({ ...form, genre: value })}>
-                                    <SelectTrigger className={errors.genre ? "border-red-500" : ""}>
-                                        <SelectValue placeholder="Sélectionnez un genre" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="HOMME">Homme</SelectItem>
-                                        <SelectItem value="FEMME">Femme</SelectItem>
-                                        <SelectItem value="GARÇON">Garçon</SelectItem>
-                                        <SelectItem value="FILLE">Fille</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {errors.genre && (
-                                    <p className="text-sm text-red-500 flex items-center gap-1">
-                                        <AlertCircle className="h-4 w-4" />
-                                        {errors.genre}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="pointure">Pointure</Label>
-                                <Input
-                                    id="pointure"
-                                    placeholder="Ex: 42"
-                                    value={form.pointure}
-                                    onChange={(e) => setForm({ ...form, pointure: e.target.value })}
-                                    className={errors.pointure ? "border-red-500" : ""}
-                                />
-                                {errors.pointure && (
-                                    <p className="text-sm text-red-500 flex items-center gap-1">
-                                        <AlertCircle className="h-4 w-4" />
-                                        {errors.pointure}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="couleur">Couleur</Label>
-                                <Input
-                                    id="couleur"
-                                    placeholder="Ex: Noir, Blanc, Rouge"
-                                    value={form.couleur}
-                                    onChange={(e) => setForm({ ...form, couleur: e.target.value })}
-                                    className={errors.couleur ? "border-red-500" : ""}
-                                />
-                                {errors.couleur && (
-                                    <p className="text-sm text-red-500 flex items-center gap-1">
-                                        <AlertCircle className="h-4 w-4" />
-                                        {errors.couleur}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="quantite">Quantité</Label>
-                                <Input
-                                    id="quantite"
-                                    type="number"
-                                    placeholder="Ex: 10"
-                                    value={form.quantite}
-                                    onChange={(e) => setForm({ ...form, quantite: e.target.value })}
-                                    className={errors.quantite ? "border-red-500" : ""}
-                                />
-                                {errors.quantite && (
-                                    <p className="text-sm text-red-500 flex items-center gap-1">
-                                        <AlertCircle className="h-4 w-4" />
-                                        {errors.quantite}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        {errors.general && (
-                            <Alert variant="destructive">
-                                <AlertCircle className="h-4 w-4" />
-                                <AlertDescription>{errors.general}</AlertDescription>
-                            </Alert>
-                        )}
-
-                        <div className="flex gap-2 pt-4">
-                            <Button type="submit" className="flex items-center gap-2">
-                                {editProdId ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                                {editProdId ? "Modifier" : "Ajouter"}
-                            </Button>
-                            {editProdId && (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={cancelEdit}
-                                    className="flex items-center gap-2 bg-transparent"
-                                >
-                                    <X className="h-4 w-4" />
-                                    Annuler
-                                </Button>
-                            )}
-                        </div>
-                    </form>
-                </CardContent>
-            </Card>
-
+                                <div className="flex gap-2 pt-4">
+                                    <Button type="submit" className="flex items-center gap-2">
+                                        {editProdId ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                                        {editProdId ? "Modifier" : "Ajouter"}
+                                    </Button>
+                                    {editProdId && (
+                                        <Button type="button" variant="outline" onClick={cancelEdit} className="flex items-center gap-2 bg-transparent" >
+                                            <X className="h-4 w-4" />
+                                            Annuler
+                                        </Button>
+                                    )}
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
             {/* Products List */}
             <Card>
                 <CardHeader>
@@ -355,7 +350,9 @@ export default function ProductsPage() {
                                         <TableHead>Couleur</TableHead>
                                         <TableHead>Stock</TableHead>
                                         <TableHead>Statut</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
+                                        {(user.role !== ("COMMERCIALE" || "OPERATOR" || "STOCK_MANAGER")) && (
+                                            <TableHead>Actions</TableHead>
+                                        )}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -388,7 +385,17 @@ export default function ProductsPage() {
                                                                                     ? "#22c55e"
                                                                                     : product.couleur.toLowerCase().includes("jaune")
                                                                                         ? "#eab308"
-                                                                                        : "#6b7280",
+                                                                                        : product.couleur.toLowerCase().includes("orange")
+                                                                                            ? "#f97316" // orange
+                                                                                            : product.couleur.toLowerCase().includes("gris")
+                                                                                                ? "#9ca3af" // gray
+                                                                                                : product.couleur.toLowerCase().includes("rose")
+                                                                                                    ? "#ec4899" // pink
+                                                                                                    : product.couleur.toLowerCase().includes("marron")
+                                                                                                        ? "#78350f" // brown
+                                                                                                        : product.couleur.toLowerCase().includes("violet")
+                                                                                                            ? "#8b5cf6" // purple
+                                                                                                            : "#6b7280", // default: gray
                                                             }}
                                                         />
                                                         {product.couleur}
@@ -398,28 +405,22 @@ export default function ProductsPage() {
                                                 <TableCell>
                                                     <Badge variant={stockStatus.variant}>{stockStatus.text}</Badge>
                                                 </TableCell>
-                                                <TableCell className="text-right">
-                                                    <div className="flex justify-end gap-2">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => editProduct(product)}
-                                                            className="flex items-center gap-1"
-                                                        >
-                                                            <Edit className="h-3 w-3" />
-                                                            Modifier
-                                                        </Button>
-                                                        <Button
-                                                            variant="destructive"
-                                                            size="sm"
-                                                            onClick={() => deleteProduct(product._id)}
-                                                            className="flex items-center gap-1"
-                                                        >
-                                                            <Trash2 className="h-3 w-3" />
-                                                            Supprimer
-                                                        </Button>
-                                                    </div>
-                                                </TableCell>
+                                                {(user.role !== ("COMMERCIALE" || "OPERATOR" || "STOCK_MANAGER")) && (
+                                                    <TableCell className="text-right">
+                                                        <div className="flex justify-end gap-2">
+                                                            <Button variant="outline" size="sm" onClick={() => editProduct(product)} 
+                                                            className="flex items-center gap-1" >
+                                                                <Edit className="h-3 w-3" />
+                                                                Modifier
+                                                            </Button>
+                                                            <Button variant="destructive" size="sm" onClick={() => deleteProduct(product._id)} 
+                                                            className="flex items-center gap-1" >
+                                                                <Trash2 className="h-3 w-3" />
+                                                                Supprimer
+                                                            </Button>
+                                                        </div>
+                                                    </TableCell>
+                                                )}
                                             </TableRow>
                                         )
                                     })}
@@ -429,6 +430,9 @@ export default function ProductsPage() {
                     )}
                 </CardContent>
             </Card>
+            {(user.role !== "COMMERCIALE") && (
+                <ProductionSection refreshProducts={refreshProducts} />
+            )}
         </div>
         // <div className="p-4">
         //     <h1>👟 Produits</h1>

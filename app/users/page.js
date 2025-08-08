@@ -9,12 +9,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-//import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Users, Plus, Save, X, Edit, Trash2, Eye, EyeOff, AlertCircle } from "lucide-react"
+import useAuth from '@/lib/useAuth'
 
 export default function UsersPage() {
-    const { data: session, status } = useSession()
+    const user = useAuth(["ADMIN"]);
     const [users, setUsers] = useState([])
     const [form, setForm] = useState({ username: '', email: '', password: '', acces: '' })
     const [errors, setErrors] = useState({})
@@ -23,11 +24,11 @@ export default function UsersPage() {
     const router = useRouter()
 
 
-    useEffect(() => {
-        if (status == 'unauthenticated') {
-            router.push('/login');
-        }
-    }, [status])
+    // useEffect(() => {
+    //     if (status == 'unauthenticated') {
+    //         router.push('/login');
+    //     }
+    // }, [status])
 
     useEffect(() => {
         fetch('/api/users')
@@ -35,6 +36,8 @@ export default function UsersPage() {
             .then(data => setUsers(data.users))
 
     }, [])
+
+    if (!user) return null;
 
     const refreshUsers = async () => {
         const res = await fetch('/api/users');
@@ -155,200 +158,203 @@ export default function UsersPage() {
             </div>
 
             {/* Add/Edit User Form */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        {editUserId ? <Edit className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
-                        {editUserId ? "Modifier l'utilisateur" : "Ajouter un utilisateur"}
-                    </CardTitle>
-                    <CardDescription>
-                        {editUserId ? "Modifiez les informations de l'utilisateur" : "Créez un nouveau compte utilisateur"}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="username">Nom d'utilisateur</Label>
-                                <Input
-                                    id="username"
-                                    placeholder="Entrez le nom d'utilisateur"
-                                    value={form.username}
-                                    onChange={(e) => setForm({ ...form, username: e.target.value })}
-                                    className={errors.username ? "border-red-500" : ""}
-                                />
-                                {errors.username && (
-                                    <p className="text-sm text-red-500 flex items-center gap-1">
-                                        <AlertCircle className="h-4 w-4" />
-                                        {errors.username}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    placeholder="exemple@email.com"
-                                    value={form.email}
-                                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                                    autoComplete="username"
-                                    className={errors.email ? "border-red-500" : ""}
-                                />
-                                {errors.email && (
-                                    <p className="text-sm text-red-500 flex items-center gap-1">
-                                        <AlertCircle className="h-4 w-4" />
-                                        {errors.email}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="password">Mot de passe</Label>
-                                <div className="relative">
+            <div className="my-4 gap-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            {editUserId ? <Edit className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+                            {editUserId ? "Modifier l'utilisateur" : "Ajouter un utilisateur"}
+                        </CardTitle>
+                        <CardDescription>
+                            {editUserId ? "Modifiez les informations de l'utilisateur" : "Créez un nouveau compte utilisateur"}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="username">Nom d'utilisateur</Label>
                                     <Input
-                                        id="password"
-                                        type={showPwd ? "text" : "password"}
-                                        placeholder="Entrez le mot de passe"
-                                        value={form.password}
-                                        onChange={(e) => setForm({ ...form, password: e.target.value })}
-                                        autoComplete="new-password"
-                                        className={errors.password ? "border-red-500 pr-10" : "pr-10"}
+                                        id="username"
+                                        placeholder="Entrez le nom d'utilisateur"
+                                        value={form.username}
+                                        onChange={(e) => setForm({ ...form, username: e.target.value })}
+                                        className={errors.username ? "border-red-500" : ""}
                                     />
+                                    {errors.username && (
+                                        <p className="text-sm text-red-500 flex items-center gap-1">
+                                            <AlertCircle className="h-4 w-4" />
+                                            {errors.username}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="email">Email</Label>
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        placeholder="exemple@email.com"
+                                        value={form.email}
+                                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                                        autoComplete="username"
+                                        className={errors.email ? "border-red-500" : ""}
+                                    />
+                                    {errors.email && (
+                                        <p className="text-sm text-red-500 flex items-center gap-1">
+                                            <AlertCircle className="h-4 w-4" />
+                                            {errors.email}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="password">Mot de passe</Label>
+                                    <div className="relative">
+                                        <Input
+                                            id="password"
+                                            type={showPwd ? "text" : "password"}
+                                            placeholder="Entrez le mot de passe"
+                                            value={form.password}
+                                            onChange={(e) => setForm({ ...form, password: e.target.value })}
+                                            autoComplete="new-password"
+                                            className={errors.password ? "border-red-500 pr-10" : "pr-10"}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                            onClick={() => setShowPwd(!showPwd)}
+                                        >
+                                            {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </Button>
+                                    </div>
+                                    {errors.password && (
+                                        <p className="text-sm text-red-500 flex items-center gap-1">
+                                            <AlertCircle className="h-4 w-4" />
+                                            {errors.password}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="access">Niveau d'accès</Label>
+                                    <Select value={form.acces} onValueChange={(value) => setForm({ ...form, acces: value })}>
+                                        <SelectTrigger className={errors.acces ? "border-red-500" : ""}>
+                                            <SelectValue placeholder="Sélectionnez un niveau d'accès" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="OPERATOR">Opérateur</SelectItem>
+                                            <SelectItem value="ADMIN">Administrateur</SelectItem>
+                                            <SelectItem value="STOCK_MANAGER">Gestionnaire de Stock</SelectItem>
+                                            <SelectItem value="COMMERCIALE">Commercial</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.acces && (
+                                        <p className="text-sm text-red-500 flex items-center gap-1">
+                                            <AlertCircle className="h-4 w-4" />
+                                            {errors.acces}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {errors.general && (
+                                <Alert variant="destructive">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertDescription>{errors.general}</AlertDescription>
+                                </Alert>
+                            )}
+
+                            <div className="flex gap-2 pt-4">
+                                <Button type="submit" className="flex items-center gap-2">
+                                    {editUserId ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                                    {editUserId ? "Modifier" : "Ajouter"}
+                                </Button>
+                                {editUserId && (
                                     <Button
                                         type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                        onClick={() => setShowPwd(!showPwd)}
+                                        variant="outline"
+                                        onClick={cancelEdit}
+                                        className="flex items-center gap-2 bg-transparent"
                                     >
-                                        {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        <X className="h-4 w-4" />
+                                        Annuler
                                     </Button>
-                                </div>
-                                {errors.password && (
-                                    <p className="text-sm text-red-500 flex items-center gap-1">
-                                        <AlertCircle className="h-4 w-4" />
-                                        {errors.password}
-                                    </p>
                                 )}
                             </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="access">Niveau d'accès</Label>
-                                <Select value={form.acces} onValueChange={(value) => setForm({ ...form, acces: value })}>
-                                    <SelectTrigger className={errors.acces ? "border-red-500" : ""}>
-                                        <SelectValue placeholder="Sélectionnez un niveau d'accès" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="OPERATOR">Opérateur</SelectItem>
-                                        <SelectItem value="ADMIN">Administrateur</SelectItem>
-                                        <SelectItem value="STOCK_MANAGER">Gestionnaire de Stock</SelectItem>
-                                        <SelectItem value="COMMERCIALE">Commercial</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {errors.acces && (
-                                    <p className="text-sm text-red-500 flex items-center gap-1">
-                                        <AlertCircle className="h-4 w-4" />
-                                        {errors.acces}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        {errors.general && (
-                            <Alert variant="destructive">
-                                <AlertCircle className="h-4 w-4" />
-                                <AlertDescription>{errors.general}</AlertDescription>
-                            </Alert>
-                        )}
-
-                        <div className="flex gap-2 pt-4">
-                            <Button type="submit" className="flex items-center gap-2">
-                                {editUserId ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                                {editUserId ? "Modifier" : "Ajouter"}
-                            </Button>
-                            {editUserId && (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={cancelEdit}
-                                    className="flex items-center gap-2 bg-transparent"
-                                >
-                                    <X className="h-4 w-4" />
-                                    Annuler
-                                </Button>
-                            )}
-                        </div>
-                    </form>
-                </CardContent>
-            </Card>
-
+                        </form>
+                    </CardContent>
+                </Card>
+            </div>
             {/* Users List */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Liste des Utilisateurs</CardTitle>
-                    <CardDescription>
-                        {users.length} utilisateur{users.length > 1 ? "s" : ""} enregistré{users.length > 1 ? "s" : ""}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {users.length === 0 ? (
-                        <div className="text-center py-8 text-muted-foreground">
-                            <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                            <p>Aucun utilisateur trouvé</p>
-                        </div>
-                    ) : (
-                        <div className="rounded-md border">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Nom d'utilisateur</TableHead>
-                                        <TableHead>Email</TableHead>
-                                        <TableHead>Niveau d'accès</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {users.map((user) => (
-                                        <TableRow key={user._id}>
-                                            <TableCell className="font-medium">{user.username}</TableCell>
-                                            <TableCell>{user.email}</TableCell>
-                                            <TableCell>
-                                                <Badge variant={getAccessBadgeVariant(user.acces)}>{user.acces}</Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => startEditUser(user)}
-                                                        className="flex items-center gap-1"
-                                                    >
-                                                        <Edit className="h-3 w-3" />
-                                                        Modifier
-                                                    </Button>
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        onClick={() => deleteUser(user._id)}
-                                                        className="flex items-center gap-1"
-                                                    >
-                                                        <Trash2 className="h-3 w-3" />
-                                                        Supprimer
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
+            <div className="my-4 gap-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Liste des Utilisateurs</CardTitle>
+                        <CardDescription>
+                            {users.length} utilisateur{users.length > 1 ? "s" : ""} enregistré{users.length > 1 ? "s" : ""}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {users.length === 0 ? (
+                            <div className="text-center py-8 text-muted-foreground">
+                                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                <p>Aucun utilisateur trouvé</p>
+                            </div>
+                        ) : (
+                            <div className="rounded-md border">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Nom d'utilisateur</TableHead>
+                                            <TableHead>Email</TableHead>
+                                            <TableHead>Niveau d'accès</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {users.map((user) => (
+                                            <TableRow key={user._id}>
+                                                <TableCell className="font-medium">{user.username}</TableCell>
+                                                <TableCell>{user.email}</TableCell>
+                                                <TableCell>
+                                                    <Badge variant={getAccessBadgeVariant(user.acces)}>{user.acces}</Badge>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex justify-end gap-2">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => startEditUser(user)}
+                                                            className="flex items-center gap-1"
+                                                        >
+                                                            <Edit className="h-3 w-3" />
+                                                            Modifier
+                                                        </Button>
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            onClick={() => deleteUser(user._id)}
+                                                            className="flex items-center gap-1"
+                                                        >
+                                                            <Trash2 className="h-3 w-3" />
+                                                            Supprimer
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
         </div>
         // <div className="p-4">
         //     <h1>👤 Utilisateurs</h1>

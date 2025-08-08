@@ -32,38 +32,70 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { BoxIcon, MenuIcon, PackageIcon, SendIcon, UsersIcon } from "lucide-react"
 
 const data = {
   user: {
     name: "shadcn",
     email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    avatar: "",
   },
   navMain: [
     {
+      title: "Menu",
+      href: "/",
+      url: "#",
+      icon: MenuIcon,
+      roles: ["ADMIN", "COMMERCIALE", "OPERATOR", "STOCK_MANAGER"],
+    },
+    {
       title: "Dashboard",
+      href: "/dashboard",
       url: "#",
       icon: IconDashboard,
+      roles: ["ADMIN", "COMMERCIALE", "OPERATOR", "STOCK_MANAGER"],
     },
     {
-      title: "Lifecycle",
+      title: "Produits",
+      href: "/produits",
+      url: "#",
+      icon: BoxIcon,
+      roles: ["ADMIN", "COMMERCIALE", "OPERATOR", "STOCK_MANAGER"],
+    },
+    {
+      title: "Productions",
+      href: "/productions",
+      url: "#",
+      icon: BoxIcon,
+      roles: ["ADMIN", "COMMERCIALE", "OPERATOR", "STOCK_MANAGER"],
+    },
+    {
+      title: "Utilisateurs",
+      href: "/users",
+      url: "#",
+      icon: UsersIcon,
+      roles: ["ADMIN", "COMMERCIALE", "OPERATOR", "STOCK_MANAGER"],
+    },
+    {
+      title: "Matières Premières",
+      href: "/matieres_Premieres",
       url: "#",
       icon: IconListDetails,
+      roles: ["ADMIN", "COMMERCIALE", "OPERATOR", "STOCK_MANAGER"],
     },
     {
-      title: "Analytics",
+      title: "Entrées",
+      href: "/matieres_Entrees",
       url: "#",
-      icon: IconChartBar,
+      icon: PackageIcon,
+      roles: ["ADMIN", "COMMERCIALE", "OPERATOR", "STOCK_MANAGER"],
     },
     {
-      title: "Projects",
+      title: "Sorties",
+      href: "/matiere_Sorties",
       url: "#",
-      icon: IconFolder,
-    },
-    {
-      title: "Team",
-      url: "#",
-      icon: IconUsers,
+      icon: SendIcon,
+      roles: ["ADMIN", "COMMERCIALE", "OPERATOR", "STOCK_MANAGER"],
     },
   ],
   navClouds: [

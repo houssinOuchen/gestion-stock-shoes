@@ -7,41 +7,41 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Factory, Plus, Save, X, Edit, Trash2, AlertCircle, TrendingUp, Calendar, DollarSign, Building2 } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Plus, Save, X, Edit, Trash2, AlertCircle, TrendingDown, Calendar, Factory } from "lucide-react"
 
 
-export default function MatiereSortiePage() {
+export default function MatiereSortiePage({ refreshMatiere }) {
     const [matiere_Prem, setMatiere_Prem] = useState([]);
-    const [entrees, setEntrees] = useState([]);
-    const [form, setForm] = useState({ matiere_id: '', quantite: '', date: '', prix_unite: '', fournisseur: '' });
+    const [sorties, setSorties] = useState([]);
+    const [form, setForm] = useState({ matiere_id: '', quantite: '', date: '', utiliser_production: false });
     const [editId, setEditId] = useState(null);
     const [errors, setErrors] = useState({});
 
     useEffect(() => {
+        fetchMatieres_Sorties();
         fetchMatieres_Premiere();
-        fetchMatieres_Entrees();
     }, []);
 
     const fetchMatieres_Premiere = async () => {
         const res = await fetch("/api/matieres_Premieres");
         const data = await res.json();
-        setMatiere_Prem(data.matieres);
+        setMatiere_Prem(data.matieres || []);
     };
 
-    const fetchMatieres_Entrees = async () => {
-        const res = await fetch("/api/matieres_Entrees");
+    const fetchMatieres_Sorties = async () => {
+        const res = await fetch("/api/matiere_Sorties");
         const data = await res.json();
-        setEntrees(data.entrees);
-    };
+        setSorties(data.sorties || []);
+    }
 
     const ValidateForm = () => {
         const newErrors = {};
         if (!form.matiere_id) newErrors.matiere_id = 'la matiere est requise';
         if (!form.quantite) newErrors.quantite = 'la quantite est requise';
         if (!form.date) newErrors.date = 'la date est requise';
-        if (!form.prix_unite) newErrors.prix_unite = 'le prix est requise';
-        if (!form.fournisseur) newErrors.fournisseur = 'le fournisseur est requise';
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     }
@@ -52,52 +52,52 @@ export default function MatiereSortiePage() {
         if (!ValidateForm()) return;
 
         try {
-            const res = await fetch(editId ? `/api/matieres_Entrees/${editId}` : "/api/matieres_Entrees", {
+            const res = await fetch(editId ? `/api/matiere_Sorties/${editId}` : "/api/matiere_Sorties", {
                 method: editId ? "PUT" : "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     matiere_id: form.matiere_id,
                     quantite: parseInt(form.quantite),
                     date: form.date,
-                    prix_unite: form.prix_unite,
-                    fournisseur: form.fournisseur
+                    utiliser_production: form.utiliser_production
                 })
             });
 
+            refreshMatiere();
             if (!res.ok) {
                 const data = await res.json();
                 setErrors({ general: data.error || 'Erreur inconnue' });
                 return;
             }
 
-            setForm({ matiere_id: '', quantite: '', date: '', prix_unite: '', fournisseur: '' })
+            setForm({ matiere_id: '', quantite: '', date: '', utiliser_production: false })
+            fetchMatieres_Sorties();
             fetchMatieres_Premiere();
-            fetchMatieres_Entrees();
             setErrors({});
             setEditId(null);
         } catch (err) {
             setErrors({ general: 'Erreur réseau' });
         }
-
     };
 
     const cancelEdit = () => {
-        setForm({ matiere_id: '', quantite: '', date: '', prix_unite: '', fournisseur: '' })
+        setForm({ matiere_id: '', quantite: '', date: '', utiliser_production: false })
         setEditId(null)
         setErrors({})
     }
 
     const handleEdit = (mat) => {
-        setForm({ matiere_id: mat.matiere_id._id, quantite: mat.quantite, date: mat.date?.slice(0, 10), prix_unite: mat.prix_unite, fournisseur: mat.fournisseur });
+        setForm({ matiere_id: mat.matiere_id._id, quantite: mat.quantite, date: mat.date?.slice(0, 10), utiliser_production: mat.utiliser_production });
         setErrors({});
         setEditId(mat._id);
     };
 
     const handleDelete = async (id) => {
         try {
-            await fetch(`/api/matieres_Entrees/${id}`, { method: 'DELETE' });
+            await fetch(`/api/matiere_Sorties/${id}`, { method: 'DELETE' });
 
-            fetchMatieres_Entrees();
+            refreshMatiere();
+            fetchMatieres_Sorties();
             fetchMatieres_Premiere();
         } catch (err) {
             console.error('Error deleting:', err);
@@ -105,28 +105,28 @@ export default function MatiereSortiePage() {
     };
 
     return (
-        <div className="mx-auto px-6 my-4 space-y-6">
+        <div className="my-4 space-y-6">
             {/* Header */}
             <div className="flex items-center gap-3">
                 <Factory className="h-8 w-8 text-primary" />
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Gestion des Entrées de la Matière Première</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Gestion des Sorties de la Matière Première</h1>
                     <p className="text-muted-foreground">Gérez votre stock de matières premières et fournisseurs</p>
                 </div>
             </div>
 
-            {/* Add/Edit Entry Form */}
+            {/* Add/Edit Exit Form */}
             <div className="my-4 gap-4">
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            {editId ? <Edit className="h-5 w-5" /> : <TrendingUp className="h-5 w-5" />}
-                            {editId ? "Modifier l'entrée de matière" : "Nouvelle Entrée de Matière"}
+                            {editId ? <Edit className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+                            {editId ? "Modifier la sortie de matière" : "Nouvelle Sortie de Matière"}
                         </CardTitle>
                         <CardDescription>
                             {editId
-                                ? "Modifiez les informations de l'entrée de matière première"
-                                : "Enregistrez une nouvelle entrée de matière première dans votre stock"}
+                                ? "Modifiez les informations de la sortie de matière première"
+                                : "Enregistrez une nouvelle sortie de matière première de votre stock"}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -158,7 +158,7 @@ export default function MatiereSortiePage() {
                                     <Input
                                         id="quantite"
                                         type="number"
-                                        placeholder="Ex: 50"
+                                        placeholder="Ex: 25"
                                         value={form.quantite}
                                         onChange={(e) => setForm({ ...form, quantite: e.target.value })}
                                         className={errors.quantite ? "border-red-500" : ""}
@@ -171,7 +171,7 @@ export default function MatiereSortiePage() {
                                     )}
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="date">Date d'entrée</Label>
+                                    <Label htmlFor="date">Date de sortie</Label>
                                     <Input
                                         id="date"
                                         type="date"
@@ -186,39 +186,18 @@ export default function MatiereSortiePage() {
                                         </p>
                                     )}
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="prix_unite">Prix unitaire</Label>
-                                    <Input
-                                        id="prix_unite"
-                                        type="text"
-                                        placeholder="Ex: 25.50"
-                                        value={form.prix_unite}
-                                        onChange={(e) => setForm({ ...form, prix_unite: e.target.value })}
-                                        className={errors.prix_unite ? "border-red-500" : ""}
-                                    />
-                                    {errors.prix_unite && (
-                                        <p className="text-sm text-red-500 flex items-center gap-1">
-                                            <AlertCircle className="h-4 w-4" />
-                                            {errors.prix_unite}
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="space-y-2 md:col-span-2">
-                                    <Label htmlFor="fournisseur">Fournisseur</Label>
-                                    <Input
-                                        id="fournisseur"
-                                        type="text"
-                                        placeholder="Ex: Société XYZ"
-                                        value={form.fournisseur}
-                                        onChange={(e) => setForm({ ...form, fournisseur: e.target.value })}
-                                        className={errors.fournisseur ? "border-red-500" : ""}
-                                    />
-                                    {errors.fournisseur && (
-                                        <p className="text-sm text-red-500 flex items-center gap-1">
-                                            <AlertCircle className="h-4 w-4" />
-                                            {errors.fournisseur}
-                                        </p>
-                                    )}
+                                <div className="space-y-2 md:col-span-3">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="utiliser_production"
+                                            checked={form.utiliser_production}
+                                            onCheckedChange={(checked) => setForm({ ...form, utiliser_production: checked })}
+                                        />
+                                        <Label htmlFor="utiliser_production" className="flex items-center gap-2">
+                                            <Factory className="h-4 w-4" />
+                                            Utiliser pour la production
+                                        </Label>
+                                    </div>
                                 </div>
                             </div>
                             {errors.general && (
@@ -249,22 +228,22 @@ export default function MatiereSortiePage() {
                 </Card>
             </div>
 
-            {/* Entries List */}
+            {/* Exits List */}
             <div className="my-4 gap-4">
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <TrendingUp className="h-5 w-5" />
-                            Liste des Entrées de Matières
+                            <TrendingDown className="h-5 w-5" />
+                            Liste des Sorties de Matières
                         </CardTitle>
-                        <CardDescription>Historique des entrées de matières premières dans votre stock</CardDescription>
+                        <CardDescription>Historique des sorties de matières premières de votre stock</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {entrees?.length === 0 ? (
+                        {sorties?.length === 0 ? (
                             <div className="text-center py-8 text-muted-foreground">
-                                <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                                <p>Aucune entrée de matière trouvée</p>
-                                <p className="text-sm">Commencez par enregistrer votre première entrée</p>
+                                <TrendingDown className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                <p>Aucune sortie de matière trouvée</p>
+                                <p className="text-sm">Commencez par enregistrer votre première sortie</p>
                             </div>
                         ) : (
                             <div className="rounded-md border">
@@ -274,42 +253,34 @@ export default function MatiereSortiePage() {
                                             <TableHead>Matière</TableHead>
                                             <TableHead>Quantité</TableHead>
                                             <TableHead>Date</TableHead>
-                                            <TableHead>Prix Unitaire</TableHead>
-                                            <TableHead>Fournisseur</TableHead>
+                                            <TableHead>Usage Production</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {entrees?.map((e) => (
-                                            <TableRow key={e._id}>
+                                        {sorties?.map((s) => (
+                                            <TableRow key={s._id}>
                                                 <TableCell>
-                                                    <code className="bg-muted px-2 py-1 rounded text-sm">{e.matiere_id?.reference}</code>
+                                                    <code className="bg-muted px-2 py-1 rounded text-sm">{s.matiere_id?.reference}</code>
                                                 </TableCell>
-                                                <TableCell className="font-medium">{e.quantite}</TableCell>
+                                                <TableCell className="font-medium">{s.quantite}</TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
                                                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                                                        {e.date?.slice(0, 10)}
+                                                        {s.date?.slice(0, 10)}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                                                        {e.prix_unite}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        <Building2 className="h-4 w-4 text-muted-foreground" />
-                                                        {e.fournisseur}
-                                                    </div>
+                                                    <Badge variant={s.utiliser_production ? "default" : "secondary"}>
+                                                        {s.utiliser_production ? "Oui" : "Non"}
+                                                    </Badge>
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex justify-end gap-4">
                                                         <Button
                                                             variant="outline"
                                                             size="sm"
-                                                            onClick={() => handleEdit(e)}
+                                                            onClick={() => handleEdit(s)}
                                                             className="flex items-center gap-1"
                                                         >
                                                             <Edit className="h-3 w-3" />
@@ -318,7 +289,7 @@ export default function MatiereSortiePage() {
                                                         <Button
                                                             variant="destructive"
                                                             size="sm"
-                                                            onClick={() => handleDelete(e._id)}
+                                                            onClick={() => handleDelete(s._id)}
                                                             className="flex items-center gap-1"
                                                         >
                                                             <Trash2 className="h-3 w-3" />
@@ -343,11 +314,7 @@ export default function MatiereSortiePage() {
 //     <form onSubmit={handleSubmit} className="space-y-4">
 //         <div>
 //             <label>Matière</label><br></br>
-//             <select
-//                 className="border p-2 mb-2"
-//                 value={form.matiere_id}
-//                 onChange={(e) => setForm({ ...form, matiere_id: e.target.value})} >
-
+//             <select className="border p-2 mb-2" value={form.matiere_id} onChange={(e) => setForm({ ...form, matiere_id: e.target.value })} >
 //                 <option value="">-- Choisir une matière --</option>
 //                 {matiere_Prem.map((m) => (
 //                     <option key={m._id} value={m._id}>
@@ -355,8 +322,7 @@ export default function MatiereSortiePage() {
 //                     </option>
 //                 ))}
 //             </select>
-//             {errors.matiere_id && <p className="text-red-600">{errors.m}</p>}
-
+//             {errors.matiere_id && <p className="text-red-600">{errors.matiere_id}</p>}
 //         </div>
 //         <div>
 //             <label>Quantité</label>
@@ -364,41 +330,30 @@ export default function MatiereSortiePage() {
 //                 type="number"
 //                 placeholder="Quantité"
 //                 value={form.quantite}
-//                 onChange={(e) => setForm({ ...form, quantite: e.target.value})}
-//                 className="border p-2 mb-2 block" />
+//                 onChange={(e) => setForm({ ...form, quantite: e.target.value })}
+//                 className="border p-2 mb-2 block"
+//             />
 //             {errors.quantite && <p className="text-red-600">{errors.quantite}</p>}
-
 //         </div>
 //         <div>
 //             <label>Date</label>
 //             <input
 //                 type="date"
 //                 value={form.date}
-//                 onChange={(e) => setForm({ ...form, date: e.target.value})}
-//                 className="border p-2 mb-2 block" />
+//                 onChange={(e) => setForm({ ...form, date: e.target.value })}
+//                 className="border p-2 mb-2 block"
+//             />
 //             {errors.date && <p className="text-red-600">{errors.date}</p>}
 //         </div>
-
 //         <div>
-//             <label>prix unite</label>
+//             <label>utiliser poue production</label>
 //             <input
-//                 type="text"
-//                 value={form.prix_unite}
-//                 onChange={(e) => setForm({ ...form, prix_unite: e.target.value})}
-//                 className="border p-2 mb-2 block" />
-//             {errors.prix_unite && <p className="text-red-600">{errors.prix_unite}</p>}
+//                 type="checkbox"
+//                 checked={form.utiliser_production}
+//                 onChange={(e) => setForm({ ...form, utiliser_production: e.target.checked })}
+//                 className="border p-2 mb-2 block"
+//             />
 //         </div>
-
-//         <div>
-//             <label>Fournisseur</label>
-//             <input
-//                 type="text"
-//                 value={form.fournisseur}
-//                 onChange={(e) => setForm({ ...form, fournisseur: e.target.value})}
-//                 className="border p-2 mb-2 block" />
-//             {errors.fournisseur && <p className="text-red-600">{errors.fournisseur}</p>}
-//         </div>
-
 //         <div className="flex space-x-2">
 //             <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
 //                 {editId ? 'Modifier' : 'Ajouter'}
@@ -411,30 +366,27 @@ export default function MatiereSortiePage() {
 //         </div>
 //         {errors.general && <p className="text-red-600">{errors.general}</p>}
 //     </form>
-
-//     <h3 className="mt-8 mb-2 font-semibold">Liste de Matieres Entrees</h3>
+//     <h3 className="mt-8 mb-2 font-semibold">Liste de Matieres Sorities</h3>
 //     <table className="w-full border mt-2">
 //         <thead>
 //             <tr className="bg-gray-100">
 //                 <th className="border px-2 py-1">Matiere</th>
 //                 <th className="border px-2 py-1">Quantité</th>
 //                 <th className="border px-2 py-1">Date</th>
-//                 <th className="border px-2 py-1">Prix Unite</th>
-//                 <th className="border px-2 py-1">Fournisseur</th>
+//                 <th className="border px-2 py-1">utiliser pour production</th>
 //                 <th className="border px-2 py-1">Actions</th>
 //             </tr>
 //         </thead>
 //         <tbody>
-//             {entrees?.map((e) => (
-//                 <tr key={e._id}>
-//                     <td className="border px-2 py-1">{e.matiere_id?.reference}</td>
-//                     <td className="border px-2 py-1">{e.quantite}</td>
-//                     <td className="border px-2 py-1">{e.date?.slice(0, 10)}</td>
-//                     <td className="border px-2 py-1">{e.prix_unite }</td>
-//                     <td className="border px-2 py-1">{e.fournisseur }</td>
+//             {sorties?.map((s) => (
+//                 <tr key={s._id}>
+//                     <td className="border px-2 py-1">{s.matiere_id?.reference}</td>
+//                     <td className="border px-2 py-1">{s.quantite}</td>
+//                     <td className="border px-2 py-1">{s.date?.slice(0, 10)}</td>
+//                     <td className="border px-2 py-1">{s.utiliser_production ? 'true' : 'false'}</td>
 //                     <td className="border px-2 py-1 space-x-2">
-//                         <button onClick={() => handleEdit(e)} className="text-blue-600">Edit</button>
-//                         <button onClick={() => handleDelete(e._id)} className="text-red-600">Delete</button>
+//                         <button onClick={() => handleEdit(s)} className="text-blue-600">Edit</button>
+//                         <button onClick={() => handleDelete(s._id)} className="text-red-600">Delete</button>
 //                     </td>
 //                 </tr>
 //             ))}

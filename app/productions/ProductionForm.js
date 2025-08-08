@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 
-export default function ProductionSection() {
+export default function ProductionSection({refreshProducts}) {
     const [productions, setProductions] = useState([]);
     const [products, setProducts] = useState([]);
     const [form, setForm] = useState({ produit_id: '', quantite: '', date: '' });
@@ -45,6 +45,7 @@ export default function ProductionSection() {
                 body: JSON.stringify(form),
             });
 
+            refreshProducts();
             
             if (!res.ok) {
                 const data = await res.json();
@@ -75,6 +76,7 @@ export default function ProductionSection() {
         try {
             await fetch(`/api/productions/${id}`, { method: 'DELETE' });
             fetchProductions();
+            refreshProducts();
         } catch (err) {
             console.error('Error deleting:', err);
         }
